@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    .notification {
+      margin: 10px 0;
+      padding: 10px;
+      border: 1px solid #eee;
+    }
+    .subscription {
+      margin: 20px 0;
+    }
+    .title {
+      color: #333;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Your Daily Notification Summary</h1>
+  <p>Hello {{user.name}},</p>
+  <p>Here are your new notifications from the last 24 hours:</p>
+
+  {{#each notifications}}
+  <div class="subscription">
+    <h2>{{@key}}</h2>
+    {{#each this}}
+    <div class="notification">
+      <div class="title">{{title}}</div>
+      <p>{{content}}</p>
+      {{#if source_url}}
+      <a href="{{source_url}}">Read More</a>
+      {{/if}}
+    </div>
+    {{/each}}
+  </div>
+  {{/each}}
+
+  <p>
+    <small>
+      To manage your notification preferences, 
+      <a href="{{preferencesUrl}}">click here</a>
+    </small>
+  </p>
+</body>
+</html>
