@@ -8,8 +8,9 @@
   },
   "dependencies": {
     "@google-cloud/secret-manager": "^5.0.0",
-    "@sendgrid/mail": "^8.1.0",
     "handlebars": "^4.7.8",
+    "nodemailer": "^6.9.9",
+    "google-auth-library": "^9.6.3",
     "pg": "^8.11.3",
     "pino": "^8.16.0"
   },

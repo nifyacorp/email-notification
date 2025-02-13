@@ -1,13 +1,15 @@
 import pg from 'pg';
 const { Pool } = pg;
 
-// Database configuration
 const config = {
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  // Cloud SQL configuration
-  host: `/cloudsql/${process.env.INSTANCE_CONNECTION_NAME}`,
+  host: process.env.DB_HOST || `/cloudsql/${process.env.INSTANCE_CONNECTION_NAME}`,
+  // Enable SSL in production
+  ssl: process.env.NODE_ENV === 'production' ? {
+    rejectUnauthorized: false
+  } : false
 };
 
 const pool = new Pool(config);
