@@ -1,9 +1,12 @@
+import express from 'express';
 import { getUsersWithNewNotifications, getUserNotifications, close as closeDb } from './database/client.js';
 import { sendEmails } from './services/email.js';
 import { render } from './services/template.js';
 import { processBatch } from './utils/batch.js';
 import logger from './utils/logger.js';
 
+const app = express();
+const port = process.env.PORT || 8080;
 const BATCH_SIZE = parseInt(process.env.BATCH_SIZE, 10) || 100;
 
 async function processUserNotifications(user, notifications) {
@@ -31,7 +34,7 @@ async function processUserNotifications(user, notifications) {
   };
 }
 
-async function main() {
+async function processEmails() {
   try {
     // Get users with new notifications
     const users = await getUsersWithNewNotifications();
@@ -53,11 +56,27 @@ async function main() {
     logger.info('Email processing completed successfully');
   } catch (error) {
     logger.error('Failed to process emails', { error: error.message });
-    process.exit(1);
-  } finally {
-    await closeDb();
+    throw error;
   }
 }
 
-// Run the job
-main();
+// Health check endpoint
+app.get('/', (req, res) => {
+  res.status(200).send('Email service is running');
+});
+
+// Trigger email processing
+app.post('/process', async (req, res) => {
+  try {
+    await processEmails();
+    res.status(200).json({ message: 'Email processing completed successfully' });
+  } catch (error) {
+    logger.error('Failed to process emails', { error: error.message });
+    res.status(500).json({ error: 'Failed to process emails' });
+  }
+});
+
+// Start the server
+app.listen(port, () => {
+  logger.info(`Email service listening on port ${port}`);
+});

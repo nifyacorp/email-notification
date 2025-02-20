@@ -15,6 +15,7 @@ COPY src/ ./src/
 
 # Set environment variables
 ENV NODE_ENV=production
+ENV PORT=8080
 
 # Run the application
 CMD [ "node", "src/index.js" ]
