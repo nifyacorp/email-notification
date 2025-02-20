@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
-import { google } from 'google-auth-library';
+import pkg from 'google-auth-library';
+const { GoogleAuth, OAuth2Client } = pkg;
 import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
 import logger from '../utils/logger.js';
 
@@ -28,7 +29,7 @@ async function getSecrets() {
 async function createTransporter() {
   const { clientId, clientSecret, refreshToken } = await getSecrets();
   
-  const oauth2Client = new google.auth.OAuth2(
+  const oauth2Client = new OAuth2Client(
     clientId,
     clientSecret,
     'https://developers.google.com/oauthplayground',
