@@ -18,7 +18,7 @@
 </head>
 <body>
   <h1>Your Daily Notification Summary</h1>
-  <p>Hello {{user.name}},</p>
+  <p>Hello,</p>
   <p>Here are your new notifications from the last 24 hours:</p>
 
   {{#each notifications}}
@@ -28,6 +28,7 @@
     <div class="notification">
       <div class="title">{{title}}</div>
       <p>{{content}}</p>
+      <div class="timestamp">{{formatDate timestamp}}</div>
       {{#if source_url}}
       <a href="{{source_url}}">Read More</a>
       {{/if}}

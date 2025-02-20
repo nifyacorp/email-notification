@@ -2,6 +2,11 @@ import Handlebars from 'handlebars';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
 
+// Register Handlebars helpers
+Handlebars.registerHelper('formatDate', function(date) {
+  return new Date(date).toLocaleString();
+});
+
 const templates = new Map();
 
 export async function loadTemplate(name) {
