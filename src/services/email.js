@@ -27,8 +27,10 @@ async function getSecrets() {
 }
 
 async function createTransporter() {
+  logger.info('Creating email transporter');
   const { clientId, clientSecret, refreshToken } = await getSecrets();
   
+  logger.info('Initializing OAuth2 client');
   const oauth2Client = new OAuth2Client(
     clientId,
     clientSecret,
@@ -40,8 +42,10 @@ async function createTransporter() {
     refresh_token: refreshToken
   });
 
+  logger.info('Getting access token');
   const accessToken = await oauth2Client.getAccessToken();
 
+  logger.info('Creating nodemailer transport');
   return nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -58,6 +62,12 @@ async function createTransporter() {
 async function sendWithRetry(email, retries = 0) {
   const maxRetries = parseInt(process.env.MAX_RETRIES, 10) || 3;
   try {
+    logger.info('Attempting to send email', { 
+      to: email.to, 
+      attempt: retries + 1,
+      maxRetries 
+    });
+
     const transporter = await createTransporter();
     
     await transporter.sendMail({
@@ -72,13 +82,26 @@ async function sendWithRetry(email, retries = 0) {
       subject: email.subject
     });
   } catch (error) {
-    logger.error('Failed to send email', {
+    const errorDetails = {
       error: error.message,
+      stack: error.stack,
+      code: error.code,
+      command: error.command,
       to: email.to,
       attempt: retries + 1
+    };
+    
+    logger.error('Failed to send email', {
+      ...errorDetails,
+      response: error.response
     });
     
     if (retries < maxRetries) {
+      logger.info('Retrying email send', { 
+        to: email.to, 
+        nextAttempt: retries + 2,
+        delay: Math.pow(2, retries) * 1000 
+      });
       const delay = Math.pow(2, retries) * 1000; // Exponential backoff
       await new Promise(resolve => setTimeout(resolve, delay));
       return sendWithRetry(email, retries + 1);

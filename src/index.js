@@ -79,8 +79,13 @@ app.post('/process', async (req, res) => {
 // Test email endpoint
 app.post('/test-email', async (req, res) => {
   try {
+    logger.info('Received test email request', { 
+      requestBody: req.body,
+      requestEmail: req.body.email 
+    });
+
     const testEmail = {
-      to: process.env.TEST_EMAIL || 'test@nifya.com',
+      to: req.body.email || process.env.TEST_EMAIL || 'test@nifya.com',
       subject: 'Test Email from Nifya Email Service',
       html: `
         <h1>Test Email</h1>
@@ -92,7 +97,12 @@ app.post('/test-email', async (req, res) => {
     await sendEmails([testEmail]);
     res.status(200).json({ message: 'Test email sent successfully' });
   } catch (error) {
-    logger.error('Failed to send test email', { error: error.message });
+    logger.error('Failed to send test email', { 
+      error: error.message,
+      stack: error.stack,
+      code: error.code,
+      command: error.command
+    });
     res.status(500).json({ error: 'Failed to send test email' });
   }
 });
