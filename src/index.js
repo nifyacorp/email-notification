@@ -6,6 +6,7 @@ import { processBatch } from './utils/batch.js';
 import logger from './utils/logger.js';
 
 const app = express();
+app.use(express.json());
 const port = process.env.PORT || 8080;
 const BATCH_SIZE = parseInt(process.env.BATCH_SIZE, 10) || 100;
 
@@ -80,9 +81,15 @@ app.post('/process', async (req, res) => {
 app.post('/test-email', async (req, res) => {
   try {
     logger.info('Received test email request', { 
-      requestBody: req.body,
-      requestEmail: req.body.email 
+      body: JSON.stringify(req.body),
+      email: req.body?.email,
+      contentType: req.headers['content-type']
     });
+
+    if (!req.body || !req.body.email) {
+      logger.error('Invalid request - missing email', { body: JSON.stringify(req.body) });
+      return res.status(400).json({ error: 'Email address is required' });
+    }
 
     const testEmail = {
       to: req.body.email || process.env.TEST_EMAIL || 'test@nifya.com',

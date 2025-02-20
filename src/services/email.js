@@ -9,6 +9,7 @@ const secrets = new SecretManagerServiceClient({
 });
 
 async function getSecrets() {
+  logger.info('Fetching secrets from Secret Manager');
   const [clientId] = await secrets.accessSecretVersion({
     name: 'projects/delta-entity-447812-p2/secrets/GMAIL_CLIENT_ID/versions/latest'
   });
@@ -19,6 +20,7 @@ async function getSecrets() {
     name: 'projects/delta-entity-447812-p2/secrets/GMAIL_REFRESH_TOKEN/versions/latest'
   });
 
+  logger.info('Successfully retrieved all secrets');
   return {
     clientId: clientId.payload.data.toString(),
     clientSecret: clientSecret.payload.data.toString(),
@@ -45,7 +47,15 @@ async function createTransporter() {
   logger.info('Getting access token');
   const accessToken = await oauth2Client.getAccessToken();
 
-  logger.info('Creating nodemailer transport');
+  logger.info('Creating nodemailer transport', {
+    service: 'gmail',
+    user: process.env.GMAIL_USER,
+    hasClientId: !!clientId,
+    hasClientSecret: !!clientSecret,
+    hasRefreshToken: !!refreshToken,
+    hasAccessToken: !!accessToken?.token
+  });
+
   return nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -85,15 +95,20 @@ async function sendWithRetry(email, retries = 0) {
     const errorDetails = {
       error: error.message,
       stack: error.stack,
-      code: error.code,
-      command: error.command,
+      errorName: error.name,
+      errorCode: error.code,
+      responseCode: error.responseCode,
+      command: error.command || 'N/A',
       to: email.to,
-      attempt: retries + 1
+      attempt: retries + 1,
+      oauthError: error.info?.error,
+      oauthErrorDescription: error.info?.error_description
     };
     
     logger.error('Failed to send email', {
       ...errorDetails,
-      response: error.response
+      response: error.response,
+      info: error.info
     });
     
     if (retries < maxRetries) {
