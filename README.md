@@ -1,152 +1,147 @@
-# Nifya Email Service
+# NIFYA Email Notification Service
 
-A Cloud Run job service that sends daily email summaries of notifications to users.
+The Email Notification Service is responsible for sending email notifications to users based on their preferences. It supports both immediate notifications for debugging purposes and daily digest emails that aggregate all notifications for a user.
 
-## 🚀 Features
+## Features
 
-- Daily email summaries of new notifications
-- Personalized content per user
-- HTML email templates with Handlebars
-- Batched processing for efficiency
-- Error handling with retry logic
-- Email delivery tracking
-- Rate limiting support
+- **Daily Digest Emails**: Sends a single email per day containing all notifications for a user
+- **Immediate Notifications**: For debugging purposes, sends immediate notifications to the test user (nifyacorp@gmail.com)
+- **Email Templates**: Uses Handlebars templates for consistent email formatting
+- **PubSub Integration**: Receives notification data from the notification worker via PubSub
+- **User Preferences**: Respects user notification preferences stored in the database
+- **Secure Email Delivery**: Uses OAuth2 with Gmail for secure email delivery
+- **Retry Mechanism**: Implements exponential backoff for transient email delivery failures
 
-## 🛠 Tech Stack
+## Architecture
 
-- **Runtime**: Node.js 20
-- **Database**: PostgreSQL (shared with main service)
-- **Email Service**: SendGrid
-- **Cloud Services**:
-  - Cloud Run Jobs (execution environment)
-  - Cloud Scheduler (daily trigger)
-  - Cloud SQL (PostgreSQL hosting)
-  - Secret Manager (API keys)
+The Email Notification Service is part of the NIFYA notification pipeline:
 
-## 📋 Prerequisites
+1. The notification worker creates notifications in the database
+2. The notification worker publishes messages to PubSub topics:
+   - `email-notifications-immediate` for immediate notifications
+   - `email-notifications-daily` for daily digest notifications
+3. The Email Notification Service subscribes to these topics and processes the messages
+4. For immediate notifications, it checks if the user should receive them (test user or user with instant notifications enabled)
+5. For daily digests, it aggregates notifications and sends a single email per day
 
-- Google Cloud project with:
-  - Cloud Run Jobs enabled
-  - Cloud Scheduler enabled
-  - Secret Manager enabled
-  - Cloud SQL configured
-- SendGrid account and API key
-- Environment variables configured
+## Setup and Configuration
 
-## 🔧 Configuration
+### Environment Variables
 
-Required environment variables:
-```bash
-# Database Configuration
+```
+# Database
+DB_USER=postgres
+DB_PASSWORD=your_password
 DB_NAME=nifya
-DB_USER=nifya
-DB_PASSWORD=your-password-here
+DB_HOST=localhost
+INSTANCE_CONNECTION_NAME=your-project:region:instance
 
-# Google Cloud Configuration
+# Gmail
+GMAIL_USER=your-email@gmail.com
+GMAIL_CLIENT_ID=your-client-id
+GMAIL_CLIENT_SECRET=your-client-secret
+GMAIL_REFRESH_TOKEN=your-refresh-token
+
+# PubSub
 GOOGLE_CLOUD_PROJECT=your-project-id
-INSTANCE_CONNECTION_NAME=your-instance-connection
 
-# SendGrid Configuration
-SENDGRID_API_KEY_SECRET=projects/PROJECT_ID/secrets/SENDGRID_API_KEY/versions/latest
-FROM_EMAIL=notifications@yourdomain.com
-
-# Job Configuration
-BATCH_SIZE=100
-MAX_RETRIES=3
+# Service
+PORT=8080
+NODE_ENV=development
 ```
 
-## 🏗 Project Structure
-
-```
-.
-├── src/
-│   ├── database/
-│   │   └── client.js       # Database connection and queries
-│   ├── services/
-│   │   ├── email.js        # Email sending service with retry logic
-│   │   └── template.js     # Email template rendering service
-│   ├── templates/
-│   │   └── daily.html      # Daily summary email template
-│   ├── utils/
-│   │   ├── logger.js       # Logging utilities
-│   │   └── batch.js        # Batch processing helper
-│   └── index.js            # Job entry point
-├── Dockerfile              # Container configuration
-└── package.json           # Project dependencies and scripts
-```
-
-## 🚀 Development
+### Local Development
 
 1. Install dependencies:
+   ```
+   npm install
+   ```
+
+2. Start the service:
+   ```
+   npm start
+   ```
+
+3. Test the service:
+   ```
+   curl -X POST http://localhost:8080/test-email -H "Content-Type: application/json" -d '{"email":"test@example.com"}'
+   ```
+
+## API Endpoints
+
+- `GET /`: Health check endpoint
+- `POST /test-email`: Send a test email
+- `POST /process-daily`: Manually trigger daily digest processing
+
+## Deployment
+
+### Build Docker Image
+
 ```bash
-npm install
+docker build -t nifya-email-service .
 ```
 
-2. Set up environment variables:
-```bash
-export DB_NAME=nifya
-export DB_USER=nifya
-# ... set other required variables
-```
+### Deploy to Cloud Run
 
-3. Run locally:
 ```bash
-npm start
-```
-
-## 📦 Deployment
-
-1. Build container:
-```bash
-gcloud builds submit --tag gcr.io/PROJECT_ID/email-service
-```
-
-2. Deploy job:
-```bash
-gcloud run jobs create email-service \
-  --image gcr.io/PROJECT_ID/email-service \
+gcloud run deploy nifya-email-service \
+  --image gcr.io/your-project/nifya-email-service \
+  --platform managed \
   --region us-central1 \
-  --service-account email-service@PROJECT_ID.iam.gserviceaccount.com
+  --allow-unauthenticated
 ```
 
-3. Set up daily scheduler:
+## Scheduled Daily Digest
+
+Set up a Cloud Scheduler job to trigger the daily digest processing:
+
 ```bash
-gcloud scheduler jobs create http process-emails \
+gcloud scheduler jobs create http email-daily-digest \
   --schedule="0 8 * * *" \
-  --uri="https://REGION-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/PROJECT_ID/jobs/email-service:run" \
+  --uri="https://nifya-email-service-url/process-daily" \
   --http-method=POST \
-  --oauth-service-account-email=scheduler@PROJECT_ID.iam.gserviceaccount.com
+  --time-zone="America/New_York"
 ```
 
-## 📊 Monitoring
+## Monitoring
 
-Key metrics to watch:
-- Emails sent per day
-- Delivery success rate
-- Processing duration
-- Error rate by type
-- Open and click rates
-- User engagement
+Monitor the following metrics:
 
-## 🐛 Troubleshooting
+- Email delivery success rate
+- Daily digest processing time
+- Number of notifications per digest
+- PubSub message processing errors
 
-Common issues and solutions:
+## Troubleshooting
 
-1. Email Delivery Failures
-   - Check SendGrid API status
-   - Verify API key permissions
-   - Review email content for spam triggers
-   - Check rate limits
+### Common Issues
 
-2. Database Connection Issues
-   - Verify connection string
-   - Check IAM permissions
-   - Review connection pool settings
+- **Email Delivery Failures**: Check Gmail API quotas and OAuth2 token validity
+- **Database Connection Issues**: Verify database credentials and connectivity
+- **PubSub Subscription Errors**: Check subscription existence and permissions
 
-3. Processing Errors
-   - Check batch size configuration
-   - Monitor memory usage
-   - Review error logs
+## Project Structure
+
+```
+email-notification/
+├── src/
+│   ├── database/
+│   │   └── client.js         # Database connection and queries
+│   ├── services/
+│   │   ├── email.js          # Email sending functionality
+│   │   ├── notifications.js  # Notification processing logic
+│   │   ├── pubsub.js         # PubSub subscription handling
+│   │   └── template.js       # Email template rendering
+│   ├── templates/
+│   │   ├── daily.html        # Daily digest email template
+│   │   └── immediate.html    # Immediate notification email template
+│   ├── utils/
+│   │   ├── batch.js          # Batch processing utilities
+│   │   └── logger.js         # Logging configuration
+│   └── index.js              # Main application entry point
+├── package.json
+└── README.md
+```
 
 ## 📄 License
 

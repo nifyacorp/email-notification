@@ -4,18 +4,19 @@ FROM node:20-slim
 # Create app directory
 WORKDIR /app
 
-# Copy package files
+# Copy package files and install dependencies
 COPY package*.json ./
-
-# Install dependencies
 RUN npm ci --only=production
 
-# Copy source
-COPY src/ ./src/
+# Copy application code
+COPY . .
 
 # Set environment variables
 ENV NODE_ENV=production
 ENV PORT=8080
 
-# Run the application
-CMD [ "node", "src/index.js" ]
+# Expose the port
+EXPOSE 8080
+
+# Start the service
+CMD ["node", "src/index.js"]
