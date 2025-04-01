@@ -48,8 +48,8 @@ app.post('/test-email', async (req, res) => {
     // Use email from request, env var, or default
     const recipientEmail = req.body?.email || process.env.TEST_EMAIL || 'nifyacorp@gmail.com';
     
-    // Template type can be 'immediate' or 'daily' to test different templates
-    const templateType = req.body?.template || 'immediate';
+    // Template type can be 'immediate', 'daily', or 'test'
+    const templateType = req.body?.template || 'test';
     
     let emailContent;
     
@@ -58,14 +58,14 @@ app.post('/test-email', async (req, res) => {
       const notifications = [
         {
           title: 'Test Notification 1',
-          content: 'This is a test notification content 1',
+          content: 'This is a test notification content with details about an important event or update from your subscribed source.',
           sourceUrl: 'https://nifya.com/notification/1',
           subscriptionName: 'Test Subscription 1',
           timestamp: new Date().toISOString()
         },
         {
           title: 'Test Notification 2',
-          content: 'This is a test notification content 2',
+          content: 'Another test notification with different content to demonstrate how multiple notifications appear in the daily digest email template.',
           sourceUrl: 'https://nifya.com/notification/2', 
           subscriptionName: 'Test Subscription 2',
           timestamp: new Date().toISOString()
@@ -74,7 +74,8 @@ app.post('/test-email', async (req, res) => {
       
       const html = await render('daily', {
         notifications,
-        date: new Date().toLocaleDateString()
+        date: new Date().toLocaleDateString(),
+        preferencesUrl: 'https://nifya.com/preferences'
       });
       
       emailContent = {
@@ -82,19 +83,34 @@ app.post('/test-email', async (req, res) => {
         subject: 'Daily Digest Test - Nifya Notifications',
         html
       };
-    } else {
+    } else if (templateType === 'immediate') {
       // Test immediate notification template
+      const notification = {
+        title: 'Immediate Test Notification',
+        content: 'This is a test of an immediate notification that would be sent as soon as it is received by the system.',
+        sourceUrl: 'https://nifya.com/notification/immediate-test',
+        subscriptionName: 'Test Immediate Source',
+        timestamp: new Date().toLocaleString()
+      };
+      
+      const html = await render('immediate', notification);
+      
       emailContent = {
         to: recipientEmail,
-        subject: 'Test Immediate Notification from Nifya',
-        html: `
-          <h1>Test Email</h1>
-          <p>This is a test email sent from the Nifya Email Service.</p>
-          <p>Time sent: ${new Date().toISOString()}</p>
-          <p>Environment: ${process.env.NODE_ENV || 'development'}</p>
-          <p>Service: Email Notification Service</p>
-          <p>Project ID: delta-entity-447812-p2</p>
-        `
+        subject: notification.title,
+        html
+      };
+    } else {
+      // Default test template
+      const html = await render('test', {
+        timestamp: new Date().toLocaleString(),
+        environment: process.env.NODE_ENV || 'development'
+      });
+      
+      emailContent = {
+        to: recipientEmail,
+        subject: 'Test Email from NIFYA Email Service',
+        html
       };
     }
 

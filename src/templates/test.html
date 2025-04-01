@@ -32,40 +32,33 @@
       color: #4a4a4a;
       margin-bottom: 5px;
     }
-    .notification {
+    .content-section {
       margin: 20px 0;
       padding: 15px;
       border-radius: 6px;
       background-color: #f5f9ff;
       border-left: 4px solid #3366cc;
     }
-    .title {
+    .test-title {
       color: #333;
       font-weight: bold;
       font-size: 18px;
       margin-bottom: 10px;
     }
-    .content {
+    .test-details {
       margin-bottom: 15px;
     }
-    .action-button {
-      display: inline-block;
-      padding: 8px 16px;
-      background-color: #3366cc;
-      color: white;
-      text-decoration: none;
-      border-radius: 4px;
-      font-weight: 500;
+    .info-row {
+      display: flex;
+      margin-bottom: 8px;
     }
-    .action-button:hover {
-      background-color: #2952a3;
+    .info-label {
+      font-weight: 600;
+      width: 140px;
+      color: #555;
     }
-    .metadata {
-      color: #666;
-      font-size: 0.9em;
-      margin-top: 15px;
-      padding-top: 10px;
-      border-top: 1px solid #eee;
+    .info-value {
+      flex: 1;
     }
     .footer {
       margin-top: 30px;
@@ -81,18 +74,38 @@
   <div class="container">
     <div class="header">
       <div class="logo">NIFYA</div>
-      <div>Immediate Notification</div>
+      <div>Test Email</div>
     </div>
     
-    <div class="notification">
-      <div class="title">{{title}}</div>
-      <div class="content">{{content}}</div>
-      {{#if sourceUrl}}
-      <a href="{{sourceUrl}}" class="action-button">View Details</a>
-      {{/if}}
-      <div class="metadata">
-        <div>Source: {{subscriptionName}}</div>
-        <div>Time: {{timestamp}}</div>
+    <div class="content-section">
+      <div class="test-title">Email Service Test</div>
+      <div class="test-details">
+        <p>This is a test email from the NIFYA Email Notification Service.</p>
+        
+        <div class="info-row">
+          <div class="info-label">Time:</div>
+          <div class="info-value">{{timestamp}}</div>
+        </div>
+        
+        <div class="info-row">
+          <div class="info-label">Environment:</div>
+          <div class="info-value">{{environment}}</div>
+        </div>
+        
+        <div class="info-row">
+          <div class="info-label">Service:</div>
+          <div class="info-value">Email Notification Service</div>
+        </div>
+        
+        <div class="info-row">
+          <div class="info-label">Status:</div>
+          <div class="info-value">Operational</div>
+        </div>
+        
+        <div class="info-row">
+          <div class="info-label">Project ID:</div>
+          <div class="info-value">delta-entity-447812-p2</div>
+        </div>
       </div>
     </div>
     

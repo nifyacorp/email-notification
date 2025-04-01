@@ -2,6 +2,10 @@
 
 The Email Notification Service is responsible for sending email notifications to users based on their preferences. It supports both immediate notifications for debugging purposes and daily digest emails that aggregate all notifications for a user.
 
+## Production Service
+
+The service is deployed at: **https://email-notification-415554190254.us-central1.run.app**
+
 ## Quick Start
 
 ```bash
@@ -9,12 +13,34 @@ The Email Notification Service is responsible for sending email notifications to
 npm install
 npm start
 
-# 2. Test email delivery
-curl -X POST http://localhost:8080/test-email -H "Content-Type: application/json" -d '{"email":"your-email@example.com"}'
+# 2. Test with deployed service
+curl -X POST https://email-notification-415554190254.us-central1.run.app/test-email -H "Content-Type: application/json" -d '{"email":"ratonxi@gmail.com"}'
 
-# 3. Cloud setup (Google Cloud Project: delta-entity-447812-p2)
+# 3. Test daily digest template
+curl -X POST https://email-notification-415554190254.us-central1.run.app/test-email -H "Content-Type: application/json" -d '{"email":"ratonxi@gmail.com","template":"daily"}'
+
+# 4. Check service status
+curl https://email-notification-415554190254.us-central1.run.app/status
+
+# 5. Cloud setup (Google Cloud Project: delta-entity-447812-p2)
 ./setup-cloud.sh
 ```
+
+## Test Scripts
+
+The `scripts` directory contains Node.js scripts for testing all aspects of the email service:
+
+```bash
+# Run individual tests
+node scripts/status.js
+node scripts/test-email.js
+node scripts/process-daily.js
+
+# Run all tests in sequence
+node scripts/run-all-tests.js
+```
+
+See the [scripts README](./scripts/README.md) for detailed documentation.
 
 ## Features
 

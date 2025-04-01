@@ -1,47 +1,158 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    .notification {
-      margin: 10px 0;
-      padding: 10px;
-      border: 1px solid #eee;
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      margin: 0;
+      padding: 0;
+      background-color: #f9f9f9;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #eee;
+    }
+    .logo {
+      font-size: 24px;
+      font-weight: bold;
+      color: #4a4a4a;
+      margin-bottom: 5px;
+    }
+    .notification-date {
+      font-size: 16px;
+      color: #666;
+      margin-bottom: 15px;
     }
     .subscription {
-      margin: 20px 0;
+      margin: 25px 0;
+    }
+    .subscription-name {
+      font-size: 18px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #eee;
+    }
+    .notification {
+      margin: 15px 0;
+      padding: 15px;
+      border-radius: 6px;
+      background-color: #f5f9ff;
+      border-left: 4px solid #3366cc;
+    }
+    .notification-count {
+      background-color: #3366cc;
+      color: white;
+      border-radius: 12px;
+      padding: 2px 8px;
+      font-size: 12px;
+      margin-left: 8px;
     }
     .title {
       color: #333;
       font-weight: bold;
+      font-size: 16px;
+      margin-bottom: 8px;
+    }
+    .content {
+      margin-bottom: 12px;
+    }
+    .timestamp {
+      color: #666;
+      font-size: 12px;
+      margin-top: 8px;
+    }
+    .action-button {
+      display: inline-block;
+      padding: 6px 12px;
+      background-color: #3366cc;
+      color: white;
+      text-decoration: none;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .action-button:hover {
+      background-color: #2952a3;
+    }
+    .summary {
+      background-color: #f5f5f5;
+      padding: 12px;
+      margin: 20px 0;
+      border-radius: 6px;
+      text-align: center;
+    }
+    .summary-count {
+      font-weight: bold;
+      color: #3366cc;
+    }
+    .footer {
+      margin-top: 30px;
+      padding-top: 15px;
+      border-top: 1px solid #eee;
+      text-align: center;
+      font-size: 12px;
+      color: #888;
+    }
+    .preferences-link {
+      color: #3366cc;
+      text-decoration: none;
+    }
+    .preferences-link:hover {
+      text-decoration: underline;
     }
   </style>
 </head>
 <body>
-  <h1>Your Daily Notification Summary</h1>
-  <p>Hello,</p>
-  <p>Here are your new notifications from the last 24 hours:</p>
-
-  {{#each notifications}}
-  <div class="subscription">
-    <h2>{{@key}}</h2>
-    {{#each this}}
+  <div class="container">
+    <div class="header">
+      <div class="logo">NIFYA</div>
+      <div>Daily Notification Digest</div>
+    </div>
+    
+    <div class="notification-date">
+      Notifications for {{date}}
+    </div>
+    
+    <div class="summary">
+      You have <span class="summary-count">{{notifications.length}}</span> new notifications today
+    </div>
+    
+    {{#each notifications}}
     <div class="notification">
       <div class="title">{{title}}</div>
-      <p>{{content}}</p>
-      <div class="timestamp">{{formatDate timestamp}}</div>
-      {{#if source_url}}
-      <a href="{{source_url}}">Read More</a>
+      <div class="content">{{content}}</div>
+      <div class="timestamp">{{subscriptionName}} • {{timestamp}}</div>
+      {{#if sourceUrl}}
+      <div style="margin-top: 10px;">
+        <a href="{{sourceUrl}}" class="action-button">View Details</a>
+      </div>
       {{/if}}
     </div>
     {{/each}}
+    
+    <div class="footer">
+      <p>
+        <a href="{{preferencesUrl}}" class="preferences-link">Update your notification preferences</a>
+      </p>
+      <p>This email was sent by the NIFYA Notification System.</p>
+      <p>&copy; 2025 NIFYA. All rights reserved.</p>
+    </div>
   </div>
-  {{/each}}
-
-  <p>
-    <small>
-      To manage your notification preferences, 
-      <a href="{{preferencesUrl}}">click here</a>
-    </small>
-  </p>
 </body>
 </html>
