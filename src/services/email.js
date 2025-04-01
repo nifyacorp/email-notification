@@ -4,40 +4,65 @@ const { GoogleAuth, OAuth2Client } = pkg;
 import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
 import logger from '../utils/logger.js';
 
+const PROJECT_ID = 'delta-entity-447812-p2';
 const secrets = new SecretManagerServiceClient({
-  projectId: process.env.GOOGLE_CLOUD_PROJECT
+  projectId: process.env.GOOGLE_CLOUD_PROJECT || PROJECT_ID
 });
 
 async function getSecrets() {
   logger.info('Fetching secrets from Secret Manager');
-  const [clientId] = await secrets.accessSecretVersion({
-    name: 'projects/delta-entity-447812-p2/secrets/GMAIL_CLIENT_ID/versions/latest'
-  });
-  const [clientSecret] = await secrets.accessSecretVersion({
-    name: 'projects/delta-entity-447812-p2/secrets/GMAIL_CLIENT_SECRET/versions/latest'
-  });
-  const [refreshToken] = await secrets.accessSecretVersion({
-    name: 'projects/delta-entity-447812-p2/secrets/GMAIL_REFRESH_TOKEN/versions/latest'
-  });
+  try {
+    const [clientId] = await secrets.accessSecretVersion({
+      name: `projects/${PROJECT_ID}/secrets/GMAIL_CLIENT_ID/versions/latest`
+    });
+    const [clientSecret] = await secrets.accessSecretVersion({
+      name: `projects/${PROJECT_ID}/secrets/GMAIL_CLIENT_SECRET/versions/latest`
+    });
+    const [refreshToken] = await secrets.accessSecretVersion({
+      name: `projects/${PROJECT_ID}/secrets/GMAIL_REFRESH_TOKEN/versions/latest`
+    });
 
-  logger.info('Successfully retrieved all secrets');
-  return {
-    clientId: clientId.payload.data.toString(),
-    clientSecret: clientSecret.payload.data.toString(),
-    refreshToken: refreshToken.payload.data.toString()
-  };
+    logger.info('Successfully retrieved all secrets');
+    return {
+      clientId: clientId.payload.data.toString(),
+      clientSecret: clientSecret.payload.data.toString(),
+      refreshToken: refreshToken.payload.data.toString()
+    };
+  } catch (error) {
+    logger.error('Failed to fetch secrets', { error: error.message, stack: error.stack });
+    throw error;
+  }
 }
 
 async function createTransporter() {
   logger.info('Creating email transporter');
-  const { clientId, clientSecret, refreshToken } = await getSecrets();
   
+  // If we have direct environment variables, use them first
+  if (process.env.GMAIL_CLIENT_ID && process.env.GMAIL_CLIENT_SECRET && process.env.GMAIL_REFRESH_TOKEN) {
+    logger.info('Using environment variables for Gmail credentials');
+    const clientId = process.env.GMAIL_CLIENT_ID;
+    const clientSecret = process.env.GMAIL_CLIENT_SECRET;
+    const refreshToken = process.env.GMAIL_REFRESH_TOKEN;
+    
+    return createTransporterWithCredentials(clientId, clientSecret, refreshToken);
+  }
+  
+  // Otherwise fetch from Secret Manager
+  try {
+    const { clientId, clientSecret, refreshToken } = await getSecrets();
+    return createTransporterWithCredentials(clientId, clientSecret, refreshToken);
+  } catch (error) {
+    logger.error('Failed to create transporter with secret manager', { error: error.message });
+    throw error;
+  }
+}
+
+async function createTransporterWithCredentials(clientId, clientSecret, refreshToken) {
   logger.info('Initializing OAuth2 client');
   const oauth2Client = new OAuth2Client(
     clientId,
     clientSecret,
-    'https://developers.google.com/oauthplayground',
-    '415554190254-compute@developer.gserviceaccount.com'
+    'https://developers.google.com/oauthplayground'
   );
 
   oauth2Client.setCredentials({
@@ -47,9 +72,11 @@ async function createTransporter() {
   logger.info('Getting access token');
   const accessToken = await oauth2Client.getAccessToken();
 
+  const user = process.env.GMAIL_USER || 'nifyacorp@gmail.com';
+  
   logger.info('Creating nodemailer transport', {
     service: 'gmail',
-    user: process.env.GMAIL_USER,
+    user,
     hasClientId: !!clientId,
     hasClientSecret: !!clientSecret,
     hasRefreshToken: !!refreshToken,
@@ -60,7 +87,7 @@ async function createTransporter() {
     service: 'gmail',
     auth: {
       type: 'OAuth2',
-      user: process.env.GMAIL_USER,
+      user,
       clientId,
       clientSecret,
       refreshToken,

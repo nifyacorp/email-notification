@@ -84,11 +84,17 @@ docker build -t nifya-email-service .
 ### Deploy to Cloud Run
 
 ```bash
+# Build and push the Docker image
+docker build -t gcr.io/delta-entity-447812-p2/nifya-email-service .
+docker push gcr.io/delta-entity-447812-p2/nifya-email-service
+
+# Deploy to Cloud Run
 gcloud run deploy nifya-email-service \
-  --image gcr.io/your-project/nifya-email-service \
+  --image gcr.io/delta-entity-447812-p2/nifya-email-service \
   --platform managed \
   --region us-central1 \
-  --allow-unauthenticated
+  --allow-unauthenticated \
+  --set-env-vars="GMAIL_USER=YOUR_GMAIL_ADDRESS,NODE_ENV=production"
 ```
 
 ## Scheduled Daily Digest

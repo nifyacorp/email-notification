@@ -24,23 +24,69 @@ app.post('/test-email', async (req, res) => {
       contentType: req.headers['content-type']
     });
 
-    if (!req.body || !req.body.email) {
-      logger.error('Invalid request - missing email', { body: JSON.stringify(req.body) });
-      return res.status(400).json({ error: 'Email address is required' });
+    // Use email from request, env var, or default
+    const recipientEmail = req.body?.email || process.env.TEST_EMAIL || 'nifyacorp@gmail.com';
+    
+    // Template type can be 'immediate' or 'daily' to test different templates
+    const templateType = req.body?.template || 'immediate';
+    
+    let emailContent;
+    
+    if (templateType === 'daily') {
+      // Test daily digest template
+      const notifications = [
+        {
+          title: 'Test Notification 1',
+          content: 'This is a test notification content 1',
+          sourceUrl: 'https://nifya.com/notification/1',
+          subscriptionName: 'Test Subscription 1',
+          timestamp: new Date().toISOString()
+        },
+        {
+          title: 'Test Notification 2',
+          content: 'This is a test notification content 2',
+          sourceUrl: 'https://nifya.com/notification/2', 
+          subscriptionName: 'Test Subscription 2',
+          timestamp: new Date().toISOString()
+        }
+      ];
+      
+      import { render } from './services/template.js';
+      const html = await render('daily', {
+        notifications,
+        date: new Date().toLocaleDateString()
+      });
+      
+      emailContent = {
+        to: recipientEmail,
+        subject: 'Daily Digest Test - Nifya Notifications',
+        html
+      };
+    } else {
+      // Test immediate notification template
+      emailContent = {
+        to: recipientEmail,
+        subject: 'Test Immediate Notification from Nifya',
+        html: `
+          <h1>Test Email</h1>
+          <p>This is a test email sent from the Nifya Email Service.</p>
+          <p>Time sent: ${new Date().toISOString()}</p>
+          <p>Environment: ${process.env.NODE_ENV || 'development'}</p>
+          <p>Service: Email Notification Service</p>
+          <p>Project ID: delta-entity-447812-p2</p>
+        `
+      };
     }
 
-    const testEmail = {
-      to: req.body.email || process.env.TEST_EMAIL || 'test@nifya.com',
-      subject: 'Test Email from Nifya Email Service',
-      html: `
-        <h1>Test Email</h1>
-        <p>This is a test email sent from the Nifya Email Service.</p>
-        <p>Time sent: ${new Date().toISOString()}</p>
-      `
-    };
-
-    await sendEmails([testEmail]);
-    res.status(200).json({ message: 'Test email sent successfully' });
+    await sendEmails([emailContent]);
+    res.status(200).json({ 
+      message: 'Test email sent successfully',
+      details: {
+        recipient: recipientEmail,
+        template: templateType,
+        timestamp: new Date().toISOString()
+      }
+    });
   } catch (error) {
     logger.error('Failed to send test email', {
       error: error.message,
@@ -48,7 +94,7 @@ app.post('/test-email', async (req, res) => {
       code: error.code,
       command: error.command
     });
-    res.status(500).json({ error: 'Failed to send test email' });
+    res.status(500).json({ error: 'Failed to send test email', details: error.message });
   }
 });
 

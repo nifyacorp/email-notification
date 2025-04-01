@@ -2,8 +2,10 @@ import { PubSub } from '@google-cloud/pubsub';
 import logger from '../utils/logger.js';
 import { addDailyNotification } from './notifications.js';
 
+const PROJECT_ID = 'delta-entity-447812-p2';
+
 const pubsub = new PubSub({
-  projectId: process.env.GOOGLE_CLOUD_PROJECT
+  projectId: process.env.GOOGLE_CLOUD_PROJECT || PROJECT_ID
 });
 
 const IMMEDIATE_SUBSCRIPTION = 'email-notifications-immediate-sub';
