@@ -15,6 +15,27 @@ app.get('/', (req, res) => {
   res.status(200).send('Email service is running');
 });
 
+// Service status endpoint
+app.get('/status', (req, res) => {
+  const status = {
+    service: 'Email Notification Service',
+    version: '1.0.0',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    projectId: process.env.GOOGLE_CLOUD_PROJECT || 'delta-entity-447812-p2',
+    pubsub: {
+      immediateSubscription: 'email-notifications-immediate-sub',
+      dailySubscription: 'email-notifications-daily-sub'
+    },
+    endpoints: {
+      testEmail: '/test-email',
+      processDaily: '/process-daily'
+    }
+  };
+  
+  res.status(200).json(status);
+});
+
 // Test email endpoint
 app.post('/test-email', async (req, res) => {
   try {

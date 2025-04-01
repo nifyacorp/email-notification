@@ -2,6 +2,20 @@
 
 The Email Notification Service is responsible for sending email notifications to users based on their preferences. It supports both immediate notifications for debugging purposes and daily digest emails that aggregate all notifications for a user.
 
+## Quick Start
+
+```bash
+# 1. Local development
+npm install
+npm start
+
+# 2. Test email delivery
+curl -X POST http://localhost:8080/test-email -H "Content-Type: application/json" -d '{"email":"your-email@example.com"}'
+
+# 3. Cloud setup (Google Cloud Project: delta-entity-447812-p2)
+./setup-cloud.sh
+```
+
 ## Features
 
 - **Daily Digest Emails**: Sends a single email per day containing all notifications for a user
