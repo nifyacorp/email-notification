@@ -72,7 +72,6 @@ app.post('/test-email', async (req, res) => {
         }
       ];
       
-      import { render } from './services/template.js';
       const html = await render('daily', {
         notifications,
         date: new Date().toLocaleDateString()
